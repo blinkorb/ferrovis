@@ -22,9 +22,14 @@ interface Peaks {
 }
 
 const MAX_PEAK = 256;
-const PARTICLE_COUNT = 1;
+const PARTICLE_COUNT = 100;
 const PARTICLE_RADIUS = 5;
-const PARTICLE_BOUNCE = 0.3;
+const PARTICLE_BOUNCE = 0.5;
+const PARTICLE_ATTRACTION_DISTANCE = PARTICLE_RADIUS * 4;
+const PARTICLE_ATTRACTION_FORCE = 1.8 / PARTICLE_COUNT;
+const PARTICLE_REPEL_DISTANCE = PARTICLE_RADIUS * 2;
+const PARTICLE_REPEL_FORCE = 5 / PARTICLE_COUNT;
+const PARTICLE_MAX_SPEED = 1;
 
 let audio: Audio | null = null;
 
@@ -157,30 +162,78 @@ const loop = () => {
     )
     .tap(() => {
       particles.forEach((particle) => {
+        particle.x += particle.velX;
+        particle.y += particle.velY;
+
         const distanceFromCenter = ctx.getDistance(
           width * 0.5,
           height * 0.5,
           particle.x,
           particle.y
         );
-        const angle = ctx.getAngle(
+        const angleFromCenter = ctx.getAngle(
           width * 0.5,
           height * 0.5,
           particle.x,
           particle.y
         );
 
+        particles.forEach((p) => {
+          if (p === particle) {
+            return;
+          }
+
+          const distance = ctx.getDistance(particle.x, particle.y, p.x, p.y);
+          const angle = ctx.getAngle(particle.x, particle.y, p.x, p.y);
+
+          if (distance < PARTICLE_ATTRACTION_DISTANCE) {
+            if (distance < PARTICLE_REPEL_DISTANCE) {
+              particle.velX -=
+                Math.cos(angle) *
+                (PARTICLE_REPEL_DISTANCE - distance) *
+                PARTICLE_REPEL_FORCE *
+                delta;
+              particle.velY -=
+                Math.sin(angle) *
+                (PARTICLE_REPEL_DISTANCE - distance) *
+                PARTICLE_REPEL_FORCE *
+                delta;
+            } else {
+              particle.velX +=
+                Math.cos(angle) *
+                (PARTICLE_ATTRACTION_DISTANCE - distance) *
+                PARTICLE_ATTRACTION_FORCE *
+                delta;
+              particle.velY +=
+                Math.sin(angle) *
+                (PARTICLE_ATTRACTION_DISTANCE - distance) *
+                PARTICLE_ATTRACTION_FORCE *
+                delta;
+            }
+          }
+        });
+
         if (distanceFromCenter > safeRadius - PARTICLE_RADIUS) {
           particle.x =
-            width * 0.5 + Math.cos(angle) * (safeRadius - PARTICLE_RADIUS);
+            width * 0.5 +
+            Math.cos(angleFromCenter) * (safeRadius - PARTICLE_RADIUS);
           particle.y =
-            height * 0.5 + Math.sin(angle) * (safeRadius - PARTICLE_RADIUS);
+            height * 0.5 +
+            Math.sin(angleFromCenter) * (safeRadius - PARTICLE_RADIUS);
+          // @FIXME take into account angle of incidence
           particle.velX *= -PARTICLE_BOUNCE;
           particle.velY *= -PARTICLE_BOUNCE;
         }
 
-        particle.x += particle.velX;
-        particle.y += particle.velY;
+        particle.velX = Math.min(
+          Math.max(particle.velX, -PARTICLE_MAX_SPEED),
+          PARTICLE_MAX_SPEED
+        );
+        particle.velY = Math.min(
+          Math.max(particle.velY, -PARTICLE_MAX_SPEED),
+          PARTICLE_MAX_SPEED
+        );
+
         particle.velY += gravity * delta;
         ctx.fillCircle(particle.x, particle.y, PARTICLE_RADIUS, true, 'red');
       });
