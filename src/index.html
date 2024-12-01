@@ -9,6 +9,18 @@
     <title>Ferrovis - Audio Reactive Ferrofluid Visualization</title>
   </head>
   <body>
-    <main id="app"></main>
+    <main id="app">
+      <noscript>
+        JavaScript must be enabled to view this visualization.
+      </noscript>
+    </main>
+    <script type="text/javascript">
+      (() => {
+        const app = document.getElementById('app');
+        app.innerHTML = `
+          <p>Loading...</p>
+        `;
+      })();
+    </script>
   </body>
 </html>

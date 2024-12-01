@@ -4,6 +4,9 @@
   "description": "Audio Reactive Ferrofluid Visualization",
   "type": "module",
   "main": "build/index.js",
+  "exports": {
+    "./jsx-runtime": "./src/jsx-runtime.js"
+  },
   "scripts": {
     "start": "tsb serve",
     "dev": "npm run start",

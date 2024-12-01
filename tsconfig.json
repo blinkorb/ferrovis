@@ -11,7 +11,14 @@
     "noUnusedParameters": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "sourceMap": true
+    "allowImportingTsExtensions": true,
+    "target": "ESNext",
+    "module": "NodeNext",
+    "jsx": "react-jsx",
+    "jsxImportSource": "ferrovis",
+    "paths": {
+      "ferrovis/*": ["./src/*"]
+    }
   },
-  "include": ["src/**/*", "tsb.config.ts"]
+  "include": ["./src/**/*", "tsb.config.ts"]
 }
