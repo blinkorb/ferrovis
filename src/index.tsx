@@ -1,10 +1,12 @@
 import { Canvasimo } from 'canvasimo';
 
-import { mutable } from './mutable';
 import { render } from './render';
-import { trackVolume } from './track-volume';
 
 const message = 'Hello, world!';
+
+const audioContext = new AudioContext();
+const audioAnalyser = audioContext.createAnalyser();
+audioAnalyser.fftSize = 1024;
 
 const getMicAudio = () => {
   window.navigator.mediaDevices
@@ -15,7 +17,8 @@ const getMicAudio = () => {
       echoCancellation: false,
     })
     .then((stream) => {
-      trackVolume(stream, 2);
+      const streamSource = audioContext.createMediaStreamSource(stream);
+      streamSource.connect(audioAnalyser);
     })
     .catch((error) => {
       // eslint-disable-next-line no-console
@@ -31,7 +34,8 @@ const getTabAudio = () => {
   window.navigator.mediaDevices
     .getDisplayMedia({ audio: true, video: true })
     .then((stream) => {
-      trackVolume(stream, 1);
+      const streamSource = audioContext.createMediaStreamSource(stream);
+      streamSource.connect(audioAnalyser);
     })
     .catch((error) => {
       // eslint-disable-next-line no-console
@@ -39,6 +43,34 @@ const getTabAudio = () => {
       alert('Could not get tab audio');
     });
 };
+
+interface Peaks {
+  min: number | null;
+  max: number | null;
+}
+
+const MAX_PEAK = 256;
+
+const getPeaks = (dataArray: Uint8Array) =>
+  dataArray.reduce<Peaks>(
+    (memo, value) => {
+      if (memo.max === null || value > memo.max) {
+        memo.max = value;
+      }
+
+      if (memo.min === null || value < memo.min) {
+        memo.min = value;
+      }
+
+      return memo;
+    },
+    { max: null, min: null }
+  );
+
+const getClampedVolume = (peaks: Peaks) =>
+  typeof peaks.max === 'number' && typeof peaks.min === 'number'
+    ? Math.min(Math.abs(peaks.max - peaks.min), MAX_PEAK)
+    : 0;
 
 const buttonMic = <button onClick={getMicAudio}>Grant mic audio access</button>;
 const buttonTab = <button onClick={getTabAudio}>Grant tab audio access</button>;
@@ -62,11 +94,18 @@ ctx.setDensity(window.devicePixelRatio >= 2 ? 2 : 1);
 const loop = () => {
   const { width, height } = ctx.getSize();
 
+  const bufferLength = audioAnalyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+  audioAnalyser.getByteTimeDomainData(dataArray);
+
+  const peaks = getPeaks(dataArray);
+  const offset = getClampedVolume(peaks) / MAX_PEAK;
+
   ctx
     .clearCanvas()
     .fillRect(
       width * 0.5 - 2,
-      height * 0.5 - 2 - mutable.averageVolume * 0.5,
+      height * 0.5 - height * 0.5 * offset - 2,
       4,
       4,
       'black'
