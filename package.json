@@ -3,7 +3,10 @@
   "version": "0.0.0",
   "description": "Audio Reactive Ferrofluid Visualization",
   "type": "module",
-  "main": "build/index.js",
+  "main": "build/index.ts",
+  "exports": {
+    "./jsx-runtime": "./src/jsx-runtime.ts"
+  },
   "scripts": {
     "start": "tsb serve",
     "dev": "npm run start",
