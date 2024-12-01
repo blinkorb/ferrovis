@@ -9,6 +9,23 @@ interface Audio {
   audioAnalyser: AnalyserNode;
 }
 
+interface Particle {
+  x: number;
+  y: number;
+  velX: number;
+  velY: number;
+}
+
+interface Peaks {
+  min: number | null;
+  max: number | null;
+}
+
+const MAX_PEAK = 256;
+const PARTICLE_COUNT = 1;
+const PARTICLE_RADIUS = 5;
+const PARTICLE_BOUNCE = 0.3;
+
 let audio: Audio | null = null;
 
 const initAudioContext = () => {
@@ -63,13 +80,6 @@ const getTabAudio = () => {
     });
 };
 
-interface Peaks {
-  min: number | null;
-  max: number | null;
-}
-
-const MAX_PEAK = 256;
-
 const getPeaks = (dataArray: Uint8Array) =>
   dataArray.reduce<Peaks>(
     (memo, value) => {
@@ -91,27 +101,43 @@ const getClampedVolume = (peaks: Peaks) =>
     ? Math.min(Math.abs(peaks.max - peaks.min), MAX_PEAK)
     : 0;
 
-const buttonMic = <button onClick={getMicAudio}>Grant mic audio access</button>;
-const buttonTab = <button onClick={getTabAudio}>Grant tab audio access</button>;
 const canvas = <canvas width={200} height={200}></canvas>;
+
+const ctx = new Canvasimo(canvas as HTMLCanvasElement);
+ctx.setDensity(window.devicePixelRatio >= 2 ? 2 : 1);
+
+const gravity = 1;
+let particles: readonly Particle[] = [];
+let prev = Date.now();
+
+const initParticles = () => {
+  const { width, height } = ctx.getSize();
+  particles = [...Array(PARTICLE_COUNT)].map(() => ({
+    x: width * 0.5 + Math.random() * 10 - 5,
+    y: height * 0.5 + Math.random() * 10 - 5,
+    velX: 0,
+    velY: 0,
+  }));
+};
 
 render(
   <div>
     <div>
       <p>{message}</p>
-      {buttonMic}
-      {buttonTab}
+      <button onClick={getMicAudio}>Grant mic audio access</button>
+      <button onClick={getTabAudio}>Grant tab audio access</button>
+      <button onClick={initParticles}>Reset particles</button>
     </div>
     <div>{canvas}</div>
   </div>,
   document.getElementById('app')
 );
 
-const ctx = new Canvasimo(canvas as HTMLCanvasElement);
-ctx.setDensity(window.devicePixelRatio >= 2 ? 2 : 1);
-
 const loop = () => {
+  const now = Date.now();
+  const delta = (now - prev) / 1000;
   const { width, height } = ctx.getSize();
+  const safeRadius = Math.min(width, height) * 0.5;
 
   const bufferLength = audio?.audioAnalyser.frequencyBinCount ?? 0;
   const dataArray = new Uint8Array(bufferLength);
@@ -128,8 +154,39 @@ const loop = () => {
       Math.min(width, height) * 0.5 * offset,
       false,
       'black'
-    );
+    )
+    .tap(() => {
+      particles.forEach((particle) => {
+        const distanceFromCenter = ctx.getDistance(
+          width * 0.5,
+          height * 0.5,
+          particle.x,
+          particle.y
+        );
+        const angle = ctx.getAngle(
+          width * 0.5,
+          height * 0.5,
+          particle.x,
+          particle.y
+        );
 
+        if (distanceFromCenter > safeRadius - PARTICLE_RADIUS) {
+          particle.x =
+            width * 0.5 + Math.cos(angle) * (safeRadius - PARTICLE_RADIUS);
+          particle.y =
+            height * 0.5 + Math.sin(angle) * (safeRadius - PARTICLE_RADIUS);
+          particle.velX *= -PARTICLE_BOUNCE;
+          particle.velY *= -PARTICLE_BOUNCE;
+        }
+
+        particle.x += particle.velX;
+        particle.y += particle.velY;
+        particle.velY += gravity * delta;
+        ctx.fillCircle(particle.x, particle.y, PARTICLE_RADIUS, true, 'red');
+      });
+    });
+
+  prev = now;
   window.requestAnimationFrame(loop);
 };
 
