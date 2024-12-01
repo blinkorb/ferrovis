@@ -4,9 +4,22 @@ import { render } from './render';
 
 const message = 'Hello, world!';
 
-const audioContext = new AudioContext();
-const audioAnalyser = audioContext.createAnalyser();
-audioAnalyser.fftSize = 1024;
+interface Audio {
+  audioContext: AudioContext;
+  audioAnalyser: AnalyserNode;
+}
+
+let audio: Audio | null = null;
+
+const initAudioContext = () => {
+  if (!audio) {
+    const audioContext = new AudioContext();
+    const audioAnalyser = audioContext.createAnalyser();
+    audio = { audioContext, audioAnalyser };
+  }
+
+  return audio;
+};
 
 const getMicAudio = () => {
   window.navigator.mediaDevices
@@ -17,8 +30,12 @@ const getMicAudio = () => {
       echoCancellation: false,
     })
     .then((stream) => {
+      const { audioContext, audioAnalyser } = initAudioContext();
       const streamSource = audioContext.createMediaStreamSource(stream);
-      streamSource.connect(audioAnalyser);
+      const gain = audioContext.createGain();
+      gain.gain.value = 3;
+      streamSource.connect(gain);
+      gain.connect(audioAnalyser);
     })
     .catch((error) => {
       // eslint-disable-next-line no-console
@@ -34,6 +51,8 @@ const getTabAudio = () => {
   window.navigator.mediaDevices
     .getDisplayMedia({ audio: true, video: true })
     .then((stream) => {
+      initAudioContext();
+      const { audioContext, audioAnalyser } = initAudioContext();
       const streamSource = audioContext.createMediaStreamSource(stream);
       streamSource.connect(audioAnalyser);
     })
@@ -94,9 +113,9 @@ ctx.setDensity(window.devicePixelRatio >= 2 ? 2 : 1);
 const loop = () => {
   const { width, height } = ctx.getSize();
 
-  const bufferLength = audioAnalyser.frequencyBinCount;
+  const bufferLength = audio?.audioAnalyser.frequencyBinCount ?? 0;
   const dataArray = new Uint8Array(bufferLength);
-  audioAnalyser.getByteTimeDomainData(dataArray);
+  audio?.audioAnalyser.getByteTimeDomainData(dataArray);
 
   const peaks = getPeaks(dataArray);
   const offset = getClampedVolume(peaks) / MAX_PEAK;
