@@ -56,6 +56,11 @@ export namespace Ferrovis {
 }
 
 declare global {
+  interface MediaStreamConstraints {
+    noiseSuppression?: boolean;
+    echoCancellation?: boolean;
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     export type Element = Ferrovis.Element;
