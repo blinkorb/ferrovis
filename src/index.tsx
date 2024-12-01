@@ -33,7 +33,7 @@ const getMicAudio = () => {
       const { audioContext, audioAnalyser } = initAudioContext();
       const streamSource = audioContext.createMediaStreamSource(stream);
       const gain = audioContext.createGain();
-      gain.gain.value = 3;
+      gain.gain.value = 2;
       streamSource.connect(gain);
       gain.connect(audioAnalyser);
     })
@@ -122,11 +122,11 @@ const loop = () => {
 
   ctx
     .clearCanvas()
-    .fillRect(
-      width * 0.5 - 2,
-      height * 0.5 - height * 0.5 * offset - 2,
-      4,
-      4,
+    .fillCircle(
+      width * 0.5,
+      height * 0.5,
+      Math.min(width, height) * 0.5 * offset,
+      false,
       'black'
     );
 
