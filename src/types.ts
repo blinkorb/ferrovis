@@ -1,25 +1,4 @@
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace JSX {
-    interface IntrinsicElements {
-      div: IntrinsicAttributes;
-      span: IntrinsicAttributes;
-      main: IntrinsicAttributes;
-      aside: IntrinsicAttributes;
-      section: IntrinsicAttributes;
-      nav: IntrinsicAttributes;
-      article: IntrinsicAttributes;
-      ul: IntrinsicAttributes;
-      li: IntrinsicAttributes;
-      a: IntrinsicAttributes;
-      button: IntrinsicAttributes;
-      header: IntrinsicAttributes;
-      footer: IntrinsicAttributes;
-      h1: IntrinsicAttributes;
-      p: IntrinsicAttributes;
-    }
-  }
-}
+export type UnknownObject = Record<string, unknown>;
 
 export type JSXChildren =
   | HTMLElement
@@ -30,8 +9,60 @@ export type JSXChildren =
   | undefined
   | readonly JSXChildren[];
 
-export interface IntrinsicAttributes {
-  className?: string;
-  style?: CSSStyleDeclaration;
-  children?: JSXChildren;
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace Ferrovis {
+  export type Element = HTMLElement;
+
+  export interface IntrinsicAttributes {
+    className?: string;
+    style?: CSSStyleDeclaration;
+    children?: JSXChildren;
+    onClick?: (event: MouseEvent) => void;
+  }
+
+  export interface CanvasAttributes extends IntrinsicAttributes {
+    width?: number;
+    height?: number;
+  }
+
+  export interface IntrinsicElements {
+    div: IntrinsicAttributes;
+    span: IntrinsicAttributes;
+    main: IntrinsicAttributes;
+    aside: IntrinsicAttributes;
+    section: IntrinsicAttributes;
+    nav: IntrinsicAttributes;
+    article: IntrinsicAttributes;
+    ul: IntrinsicAttributes;
+    li: IntrinsicAttributes;
+    a: IntrinsicAttributes;
+    button: IntrinsicAttributes;
+    header: IntrinsicAttributes;
+    footer: IntrinsicAttributes;
+    h1: IntrinsicAttributes;
+    p: IntrinsicAttributes;
+    canvas: CanvasAttributes;
+  }
+
+  export interface ElementAttributesProperty {
+    props: UnknownObject;
+  }
+
+  export interface ElementChildrenAttribute {
+    children: JSXChildren;
+  }
+
+  export type ElementType = keyof IntrinsicElements;
+}
+
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace JSX {
+    export type Element = Ferrovis.Element;
+    export type IntrinsicAttributes = Ferrovis.IntrinsicAttributes;
+    export type IntrinsicElements = Ferrovis.IntrinsicElements;
+    export type ElementAttributesProperty = Ferrovis.ElementAttributesProperty;
+    export type ElementChildrenAttribute = Ferrovis.ElementChildrenAttribute;
+    export type ElementType = Ferrovis.ElementType;
+  }
 }

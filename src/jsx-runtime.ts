@@ -1,4 +1,14 @@
-import { JSXChildren } from './types.ts';
+import type { Ferrovis, JSXChildren } from './types.ts';
+
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace JSX {
+  export type Element = Ferrovis.Element;
+  export type IntrinsicAttributes = Ferrovis.IntrinsicAttributes;
+  export type IntrinsicElements = Ferrovis.IntrinsicElements;
+  export type ElementAttributesProperty = Ferrovis.ElementAttributesProperty;
+  export type ElementChildrenAttribute = Ferrovis.ElementChildrenAttribute;
+  export type ElementType = Ferrovis.ElementType;
+}
 
 export const jsx = <T extends keyof JSX.IntrinsicElements>(
   type: T,
@@ -34,6 +44,17 @@ export const jsx = <T extends keyof JSX.IntrinsicElements>(
         };
 
         appendChildren(props[key]);
+      }
+
+      if (
+        element instanceof HTMLCanvasElement &&
+        (key === 'width' || key === 'height')
+      ) {
+        element[key] = value;
+      }
+
+      if (key.startsWith('on')) {
+        element.addEventListener(key.slice(2).toLowerCase(), value);
       }
     });
   }
