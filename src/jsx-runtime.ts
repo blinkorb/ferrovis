@@ -1,4 +1,4 @@
-import type { Ferrovis, JSXChildren } from './types.ts';
+import type { Ferrovis, JSXChildren } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace JSX {

@@ -3,8 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "sourceMap": true,
-    "module": "ESNext"
+    "sourceMap": true
   },
   "include": ["./src/**/*"]
 }

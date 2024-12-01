@@ -1,5 +1,8 @@
-import { render } from './render.ts';
-import { trackVolume } from './track-volume.ts';
+import { Canvasimo } from 'canvasimo';
+
+import { mutable } from './mutable';
+import { render } from './render';
+import { trackVolume } from './track-volume';
 
 const message = 'Hello, world!';
 
@@ -52,3 +55,24 @@ render(
   </div>,
   document.getElementById('app')
 );
+
+const ctx = new Canvasimo(canvas as HTMLCanvasElement);
+ctx.setDensity(window.devicePixelRatio >= 2 ? 2 : 1);
+
+const loop = () => {
+  const { width, height } = ctx.getSize();
+
+  ctx
+    .clearCanvas()
+    .fillRect(
+      width * 0.5 - 2,
+      height * 0.5 - 2 - mutable.averageVolume * 0.5,
+      4,
+      4,
+      'black'
+    );
+
+  window.requestAnimationFrame(loop);
+};
+
+window.requestAnimationFrame(loop);

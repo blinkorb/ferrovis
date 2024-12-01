@@ -13,7 +13,8 @@
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
     "target": "ESNext",
-    "module": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
     "jsx": "react-jsx",
     "jsxImportSource": "ferrovis",
     "paths": {

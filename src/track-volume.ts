@@ -1,4 +1,4 @@
-import { mutable } from './mutable.ts';
+import { mutable } from './mutable';
 
 export const trackVolume = (stream: MediaStream, multiplier: number) => {
   const audioContext = new AudioContext();
