@@ -25,11 +25,12 @@ const MAX_PEAK = 256;
 const PARTICLE_COUNT = 100;
 const PARTICLE_RADIUS = 5;
 const PARTICLE_BOUNCE = 0.5;
-const PARTICLE_ATTRACTION_DISTANCE = PARTICLE_RADIUS * 4;
-const PARTICLE_ATTRACTION_FORCE = 1.8 / PARTICLE_COUNT;
-const PARTICLE_REPEL_DISTANCE = PARTICLE_RADIUS * 2;
+const PARTICLE_ATTRACTION_DISTANCE = PARTICLE_RADIUS * 6;
+const PARTICLE_ATTRACTION_FORCE = 5 / PARTICLE_COUNT;
+const PARTICLE_REPEL_DISTANCE = PARTICLE_RADIUS * 4;
 const PARTICLE_REPEL_FORCE = 5 / PARTICLE_COUNT;
-const PARTICLE_MAX_SPEED = 1;
+const PARTICLE_MAX_SPEED = 10;
+const AUDIO_INFLUENCE = 10;
 
 let audio: Audio | null = null;
 
@@ -125,6 +126,8 @@ const initParticles = () => {
   }));
 };
 
+initParticles();
+
 render(
   <div>
     <div>
@@ -149,16 +152,16 @@ const loop = () => {
   audio?.audioAnalyser.getByteTimeDomainData(dataArray);
 
   const peaks = getPeaks(dataArray);
-  const offset = getClampedVolume(peaks) / MAX_PEAK;
+  const volume = getClampedVolume(peaks) / MAX_PEAK;
 
   ctx
     .clearCanvas()
     .fillCircle(
       width * 0.5,
       height * 0.5,
-      Math.min(width, height) * 0.5 * offset,
+      Math.min(width, height) * 0.5 * volume,
       false,
-      'black'
+      'rgba(0, 0, 0, 0.1)'
     )
     .tap(() => {
       particles.forEach((particle) => {
@@ -225,17 +228,30 @@ const loop = () => {
           particle.velY *= -PARTICLE_BOUNCE;
         }
 
-        particle.velX = Math.min(
-          Math.max(particle.velX, -PARTICLE_MAX_SPEED),
-          PARTICLE_MAX_SPEED
-        );
-        particle.velY = Math.min(
-          Math.max(particle.velY, -PARTICLE_MAX_SPEED),
-          PARTICLE_MAX_SPEED
-        );
+        particle.velX -=
+          Math.cos(angleFromCenter) *
+          (safeRadius - distanceFromCenter) *
+          volume *
+          AUDIO_INFLUENCE *
+          delta;
+        particle.velY -=
+          Math.sin(angleFromCenter) *
+          (safeRadius - distanceFromCenter) *
+          volume *
+          AUDIO_INFLUENCE *
+          delta;
 
         particle.velY += gravity * delta;
-        ctx.fillCircle(particle.x, particle.y, PARTICLE_RADIUS, true, 'red');
+
+        const velDistance = ctx.getDistance(0, 0, particle.velX, particle.velY);
+        const velAngle = ctx.getAngle(0, 0, particle.velX, particle.velY);
+
+        if (velDistance > PARTICLE_MAX_SPEED) {
+          particle.velX = Math.cos(velAngle) * PARTICLE_MAX_SPEED;
+          particle.velY = Math.sin(velAngle) * PARTICLE_MAX_SPEED;
+        }
+
+        ctx.fillCircle(particle.x, particle.y, PARTICLE_RADIUS, true, 'black');
       });
     });
 
